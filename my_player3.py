@@ -283,6 +283,50 @@ def main():
             nextMoveToMake = 'PASS'
         else:
             nextMoveToMake = pickAMove(moveChoosen)
+        # --- RAG & explanation hook (non-intrusive) ---
+    import os
+    try:
+        import rag_module as rag  # separate file in same dir
+        # inject your agent functions so rag_module can use them
+        rag.checkingLiberty = checkingLiberty
+        rag.removingDeadPositions = removingDeadPositions
+        rag.gettingPlayerOpponenet = gettingPlayerOpponenet
+    except ImportError:
+        rag = None
+
+    # Optional: compute a quick eval for logging (no effect on your agent)
+    eval_for_log = None
+    try:
+        if isinstance(nextMoveToMake, tuple):  # only if we actually placed a stone
+            nb = copy.deepcopy(currBoard)
+            r, c = nextMoveToMake
+            nb[r][c] = myChip
+            nb = removingDeadPositions(nb, gettingPlayerOpponenet(myChip))
+            eval_for_log = approximationHueristicFunction(nb, gettingPlayerOpponenet(myChip), myChip)
+    except Exception:
+        pass
+
+    # absolute path so you know exactly where the file is
+    EXPLAIN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "explanation.txt")
+
+    if rag:
+        try:
+            # If your move is not a tuple, treat it as PASS for explanation purposes
+            move_for_exp = nextMoveToMake if isinstance(nextMoveToMake, tuple) else 'PASS'
+            print(f"[RAG] writing explanation to: {EXPLAIN_PATH} | move: {move_for_exp}")
+            rag.build_and_record_explanation(
+                currBoard=currBoard,
+                prevBoard=prevBoard,
+                move=move_for_exp,
+                myChip=myChip,
+                eval_score=eval_for_log,
+                llm="ollama",  # keep "none" unless Ollama is installed & running
+                explanation_log_path=EXPLAIN_PATH
+            )
+        except Exception as e:
+            print(f"[RAG] skipped due to error: {e}")
+    # --- end RAG hook ---
+
     writingGame(nextMoveToMake)
 
 if __name__ == "__main__":
