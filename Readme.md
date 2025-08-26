@@ -1,178 +1,142 @@
-Multi-Agent Game Strategy 🧠♟️
+Multi-Agent Game Strategy ♟️
 
-Alpha-Beta agent + RAG explanations + optional Ollama commentary for a 5×5 Go-like board game.
-Runs standalone (single move from input.txt) or as self-play (agent vs. agent) to generate multi-move logs and explanations.
+An AI-powered 5×5 Go-like game-playing agent built using Alpha-Beta pruning and enhanced with an optional RAG (Retrieval-Augmented Generation) layer for explainable strategies.
+Includes a self-play simulation module for automated benchmarking and generating detailed move explanations.
 
-Why this exists (and why it’s useful)
+📌 Project Overview
 
-Production-style agent loop: Reads standardized input.txt, writes output.txt → drop-in for course autograders or external match runners.
+This project focuses on designing an intelligent game-playing agent capable of making optimal decisions in a competitive two-player board game.
+It integrates traditional search algorithms with explainability features using retrieval + LLM commentary to make strategies transparent and interpretable.
 
-Explainability built-in: Every move appends a human-readable rationale to explanation.txt.
+🎯 Why This Project
 
-RAG memory: Retrieval-Augmented Generation indexes game states to surface “similar past positions”.
+Classical game-playing agents often lack explainability.
 
-Optional LLM commentary (Ollama): Local, lightweight natural-language reasons for each move.
+This project bridges the gap by combining:
 
-Self-play driver: Automates multi-move matches so you can see behavior evolve without a separate opponent.
+Alpha-Beta Pruning → Efficient optimal move search.
 
-What’s inside
+RAG-based Explanations → Explains why a move was chosen.
 
-my_player3.py – Your core agent (alpha-beta pruning + heuristic). Unchanged gameplay logic.
+Self-Play Simulation → Automates evaluation and builds a searchable memory of strategies.
 
-rag_module.py – RAG layer: lightweight vectorizer, FAISS (or Python fallback) index, explanation builder, Ollama hook.
+✅ What Was Done
 
-run_selfplay.py – Hybrid self-play (agent plays both sides) with time/ply limits and per-move timeout.
+Game-playing agent (my_player3.py)
 
-input.txt / output.txt – File interface (agent contract).
+Built from scratch with Alpha-Beta pruning and a custom heuristic.
 
-explanation.txt – Appended move rationales: captures, liberties, similar cases, optional LLM text.
+Handles move legality, captures, KO, and suicide checks.
 
-High-level architecture
-+-------------------+        +--------------------+
-| input.txt         |  --->  | my_player3.py      |  ---> writes chosen move ---> output.txt
-| (prev/curr board) |        |  • alpha-beta      |
-| + myChip (1/2)    |        |  • heuristic       |  ---> calls RAG (non-blocking)
-+-------------------+        +--------------------+         |
-                                                           v
-                                               +----------------------+
-                                               | rag_module.py        |
-                                               |  • vectorize board   |
-                                               |  • FAISS/fallback    |
-                                               |  • similar cases     |
-                                               |  • Ollama commentary |
-                                               +----------+-----------+
-                                                          |
-                                                          v
-                                                   explanation.txt
+RAG Layer (rag_module.py)
+
+Extracts board embeddings.
+
+Stores and retrieves similar past positions using FAISS (or Python fallback).
+
+Generates human-readable explanations in explanation.txt.
+
+Optional Ollama integration for LLM-powered rationales.
+
+Self-Play Simulation (run_selfplay.py)
+
+Automates agent-vs-agent matches.
+
+Generates multi-move explanations quickly.
+
+Populates RAG index for better retrieval over time.
+
+📈 Impact
+
+Explainable AI Agent → Every move has a documented rationale.
+
+Faster Evaluation → Automated self-play benchmarks strategies rapidly.
+
+Searchable Strategies → Build a memory of past positions to improve analysis.
+
+Human-Readable Insights → Optional GenAI commentary makes results intuitive.
+
+🔄 Project Flow
+flowchart TD
+    A[input.txt] --> B[my_player3.py]
+    B -->|Chosen Move| C[output.txt]
+    B --> D[RAG Module]
+    D -->|Vectorize Board| E[FAISS Index]
+    D -->|Optional Ollama| F[LLM Rationale]
+    D --> G[explanation.txt]
+    H[run_selfplay.py] --> B
 
 
-No interference: RAG runs after a move is chosen and does not affect search/decisions.
+Flow Explanation
 
-Pluggable: If FAISS or Ollama are missing, code gracefully degrades (still logs explanatory stats).
+Input → Agent reads input.txt (board + player turn).
 
-Installation
-# (recommended) make a virtual env
+Decision → Uses Alpha-Beta pruning + heuristics to choose optimal move.
+
+Explanation →
+
+Logs stats (captures, liberties).
+
+Retrieves similar past positions via FAISS/Python fallback.
+
+Optionally appends LLM-generated rationale via Ollama.
+
+Output → Writes chosen move to output.txt.
+
+Self-Play → Automates multi-move matches and explanation logging.
+
+⚡ How to Run the Project
+1. Clone the repo
+git clone https://github.com/AdityaJaiswal1010/Multi-Agent-Game-Strategy.git
+cd Multi-Agent-Game-Strategy
+
+2. Create a virtual environment
 python3 -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
 
-# base deps
+3. Install dependencies
 pip install numpy
+pip install faiss-cpu   # optional, faster retrieval
 
-# optional fast retrieval
-pip install faiss-cpu
+4. (Optional) Setup Ollama for LLM explanations
 
-# optional local LLM commentary
-# 1) Install Ollama: https://ollama.com/download
-# 2) Pull a small model:
-#    ollama pull llama3   # or: mistral, phi3
+Download Ollama
 
-Input format
+Pull a small model:
 
-my_player3.py expects input.txt as:
+ollama pull llama3
 
-<myChip>          # 1 or 2
-<prev row 1>
-<prev row 2>
-<prev row 3>
-<prev row 4>
-<prev row 5>
-<curr row 1>
-<curr row 2>
-<curr row 3>
-<curr row 4>
-<curr row 5>
-
-
-Example (empty board, Player 1 to move):
-
-1
-00000
-00000
-00000
-00000
-00000
-00000
-00000
-00000
-00000
-00000
-
-Quickstart
-A) Single move (standard agent flow)
+5. Run the agent for a single move
 python3 my_player3.py
 
 
-Writes: output.txt → e.g., 2,2 or PASS
+Reads input.txt
 
-Appends: explanation.txt → rationale (captures, liberties, similar cases, optional LLM line)
+Writes move → output.txt
 
-Using Ollama? Ensure ollama serve is running, and you’ve pulled a model.
-Disable LLM while testing by setting llm="none" in the RAG call.
+Appends explanation → explanation.txt
 
-B) Self-play (agent vs. agent, stops after N of your moves)
+6. Run self-play simulation (agent vs agent)
 python3 run_selfplay.py
 
 
-Defaults in run_selfplay.py:
+Automates matches until your agent has played 5 moves.
 
-if __name__ == "__main__":
-    hybrid_selfplay(
-        my_player_path="my_player3.py",
-        myChip=1,             # your agent is Player 1
-        max_my_moves=5,       # stop after 5 of your moves
-        per_move_timeout=10.0 # bump if first run is slow
-    )
+Appends detailed explanations for every move.
 
+📜 Example Explanation Log
+=== 2025-08-26 15:32:10 ===
+Move (2,2) | eval=4.50 | captured=0
+- new_group_size=1, liberties=4
+- Similar past positions: none yet (index will improve over time).
+- LLM: This move secures center control and maximizes liberties.
 
-Console shows board after every ply; explanation.txt accumulates rationales + similar cases.
+🧠 Key Takeaways
 
-RAG & explanations
+Built a multi-agent competitive game-playing system from scratch.
 
-Vectorizer: Encodes next-board state into a small feature vector: me/opp/empty masks + liberty sums.
+Designed a RAG-powered explainability layer for better interpretability.
 
-Index: Uses FAISS (IndexFlatIP) if installed; otherwise, a Python cosine-like fallback.
+Integrated self-play simulation to test, benchmark, and document strategies.
 
-Similar cases: Shows top-k neighbors with basic metadata (captured, score, note, outcome placeholder).
-
-Explainability: Logs captures, new group size, liberties, and (optionally) a one-liner LLM rationale.
-
-Turn LLM on/off (in my_player3.py RAG hook):
-
-rag.build_and_record_explanation(
-  currBoard=currBoard,
-  prevBoard=prevBoard,
-  move=move_for_exp,
-  myChip=myChip,
-  eval_score=eval_for_log,
-  llm="none",          # change to "ollama" once ready
-  explanation_log_path=EXPLAIN_PATH
-)
-
-Troubleshooting
-
-All moves are PASS
-
-Increase per_move_timeout in run_selfplay.py (e.g., 10.0).
-
-Temporarily set llm="none" to remove LLM latency.
-
-Print raw output.txt right after the subprocess call to confirm the move text.
-
-No explanation.txt appears
-
-Ensure rag_module.py is in the same folder as my_player3.py.
-
-Confirm these injections exist in my_player3.py (inside the RAG hook):
-
-rag.checkingLiberty = checkingLiberty
-rag.removingDeadPositions = removingDeadPositions
-rag.gettingPlayerOpponenet = gettingPlayerOpponenet
-
-
-Use the absolute path for explanation.txt (already done in the hook).
-
-Ollama errors/timeouts
-
-Run ollama serve and pull a small model (mistral, phi3).
-
-Increase the timeout= in rag_module.py’s subprocess.run(...)
+Optional Ollama integration enables GenAI-based insights for better storytelling.
