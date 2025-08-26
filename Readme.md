@@ -175,4 +175,4 @@ Ollama errors/timeouts
 
 Run ollama serve and pull a small model (mistral, phi3).
 
-Increase the timeout= in rag_module.py’s subprocess.run(...).
+Increase the timeout= in rag_module.py’s subprocess.run(...)
