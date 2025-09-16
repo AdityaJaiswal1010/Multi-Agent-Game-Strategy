@@ -1,6 +1,6 @@
 Multi-Agent Game Strategy ♟️
 
-An AI-powered 5×5 Go-like game-playing agent built using Alpha-Beta pruning and enhanced with an optional RAG (Retrieval-Augmented Generation) layer for explainable strategies.
+An AI-powered game-playing agent built using Alpha-Beta pruning and enhanced with an optional RAG (Retrieval-Augmented Generation) layer for explainable strategies.
 Includes a self-play simulation module for automated benchmarking and generating detailed move explanations.
 
 📌 Project Overview
