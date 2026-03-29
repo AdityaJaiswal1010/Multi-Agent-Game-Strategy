@@ -1,4 +1,5 @@
 # rag_module.py
+from anthropic import Anthropic
 import copy, time, json, subprocess, os
 from typing import Tuple, List, Union
 import numpy as np
@@ -112,7 +113,6 @@ class CaseIndex:
 # global, in-memory (simple) index
 RAG_INDEX = CaseIndex(dim=25*3 + 2)
 
-# ---------- LLM commentary (optional) ----------
 def genai_commentary_ollama(prompt: str, model: str = "llama3"):
     """
     Requires: Ollama installed & a model pulled (e.g., `ollama pull llama3`).
@@ -132,10 +132,24 @@ def genai_commentary_ollama(prompt: str, model: str = "llama3"):
         return "Rationale: prioritizes connection, liberties, and capture threat."
 
 def genai_commentary_claude_mcp(prompt: str):
-    """
-    Placeholder for your Claude MCP client. Wire your MCP call here and return text.
-    """
-    return "Rationale (MCP prototype): balances territory vs. capture risk; sets up next-play advantage."
+    try:
+        client = Anthropic(
+            api_key=os.environ.get("ANTHROPIC_API_KEY")
+        )
+
+        response = client.messages.create(
+            model="claude-3-5-sonnet-latest",
+            max_tokens=80,
+            temperature=0.2,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        return response.content[0].text.strip()
+
+    except Exception as e:
+        return f"Rationale (Claude MCP fallback): {str(e)}"
 
 # ---------- Main entry you will call from main() ----------
 def build_and_record_explanation(currBoard, prevBoard, move: Union[str, Tuple[int,int]], myChip: int,
