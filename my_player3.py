@@ -320,7 +320,7 @@ def main():
                 move=move_for_exp,
                 myChip=myChip,
                 eval_score=eval_for_log,
-                llm="ollama",  # keep "none" unless Ollama is installed & running
+                llm="ollama",  # keep "none" unless Ollama is installed & running or claude_mcp if you have claude api key
                 explanation_log_path=EXPLAIN_PATH
             )
         except Exception as e:
